@@ -1,6 +1,14 @@
 hash: cae447fb01c81f6fd985f46324603c2fa57b6ad9482e2b946393cac255053bb8
-updated: 2017-08-22T13:22:52.521141821-07:00
+updated: 2017-08-24T23:20:25.006476888+03:00
 imports:
+- name: cloud.google.com/go
+  version: e08da2b906e55a135acb4c335baefd7422ea35b0
+  subpackages:
+  - compute/metadata
+  - iam
+  - internal/version
+  - pubsub
+  - pubsub/apiv1
 - name: git.apache.org/thrift.git
   version: 0dd823580c78a79ae9696eb9b3650e400fff140f
   subpackages:
@@ -28,12 +36,16 @@ imports:
   version: ab9f9a6dab164b7d1246e0e688b0ab7b94d8553e
   subpackages:
   - proto
+  - protoc-gen-go/descriptor
   - ptypes
   - ptypes/any
   - ptypes/duration
+  - ptypes/empty
   - ptypes/timestamp
 - name: github.com/google/uuid
   version: 064e2069ce9c359c118179501254f67d7d37ba24
+- name: github.com/googleapis/gax-go
+  version: 2cadd475a3e966ec9b77a21afc530dbacec6d613
 - name: github.com/kolide/agent-api
   version: 7fa34da2e8903787c7a5a3a14fb91892680add1b
   repo: git@github.com:kolide/agent-api.git
@@ -68,12 +80,25 @@ imports:
   version: 1c05540f6879653db88113bc4a2b70aec4bd491f
   subpackages:
   - context
+  - context/ctxhttp
   - http2
   - http2/hpack
   - idna
   - internal/timeseries
   - lex/httplex
   - trace
+- name: golang.org/x/oauth2
+  version: 04e1573abc896e70388bd387a69753c378d46466
+  subpackages:
+  - google
+  - internal
+  - jws
+  - jwt
+- name: golang.org/x/sync
+  version: f52d1811a62927559de87708c8913c1650ce4f26
+  subpackages:
+  - errgroup
+  - semaphore
 - name: golang.org/x/sys
   version: 07c182904dbd53199946ba614a412c61d3c548f5
   subpackages:
@@ -89,16 +114,44 @@ imports:
   version: 8be79e1e0910c292df4e79c241bb7e8f7e725959
   subpackages:
   - rate
+- name: google.golang.org/api
+  version: 793872d1e17c62c1e2e4e305cac963158acb8624
+  subpackages:
+  - googleapi/transport
+  - internal
+  - iterator
+  - option
+  - support/bundler
+  - transport
+- name: google.golang.org/appengine
+  version: 45688856612892bdabe348fff413e5075ac72f46
+  subpackages:
+  - internal
+  - internal/app_identity
+  - internal/base
+  - internal/datastore
+  - internal/log
+  - internal/modules
+  - internal/remote_api
+  - internal/socket
+  - internal/urlfetch
+  - socket
+  - urlfetch
 - name: google.golang.org/genproto
   version: ee236bd376b077c7a89f260c026c4735b195e459
   subpackages:
+  - googleapis/api/annotations
+  - googleapis/iam/v1
+  - googleapis/pubsub/v1
   - googleapis/rpc/status
+  - protobuf/field_mask
 - name: google.golang.org/grpc
   version: 2308131c44e408bb7a4da392ed6849a0afe85b2f
   subpackages:
   - codes
   - connectivity
   - credentials
+  - credentials/oauth
   - grpclb/messages_only/grpc_lb_v1
   - grpclog
   - internal
@@ -120,7 +173,7 @@ testImports:
   subpackages:
   - difflib
 - name: github.com/stretchr/testify
-  version: 890a5c3458b43e6104ff5da8dfa139d013d77544
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
   - assert
   - require

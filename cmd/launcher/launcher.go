@@ -325,6 +325,7 @@ func main() {
 	defer conn.Close()
 
 	client := service.New(conn, logger)
+	client = service.AmplifyMiddleware(logger)(client)
 
 	var enrollSecret string
 	if opts.enrollSecret != "" {
