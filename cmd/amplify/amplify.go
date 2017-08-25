@@ -8,11 +8,13 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	netctx "golang.org/x/net/context"
@@ -82,11 +84,18 @@ type extension struct {
 type hosts []*host
 
 func (h hosts) Enroll(logger log.Logger, enrollSecret string) {
+	var wg sync.WaitGroup
+	wg.Add(len(h))
 	for _, hs := range h {
-		if err := hs.RequestEnrollment(enrollSecret); err != nil {
-			level.Info(logger).Log("err", err, "host", hs.Hostname)
-		}
+		go func(hs *host) {
+			if err := hs.RequestEnrollment(enrollSecret); err != nil {
+				level.Info(logger).Log("err", err, "host", hs.Hostname)
+			}
+			wg.Done()
+		}(hs)
 	}
+	wg.Wait()
+	fmt.Println("done with enrolls")
 }
 
 func (h hosts) RequestConfig(logger log.Logger, enrollSecret string) {
@@ -115,9 +124,12 @@ func (h hosts) PublishLogs(logger log.Logger, logType logger.LogType, logs []str
 
 func (ext *extension) Run() error {
 	var hosts hosts
-	h := newHost(ext.serverURL, ext.logger)
-	if h != nil {
-		hosts = append(hosts, h)
+	for i := 0; i <= 10; i++ {
+		h := newHost(ext.serverURL, ext.logger)
+		if h != nil {
+			hosts = append(hosts, h)
+			level.Info(ext.logger).Log("msg", "configured host", "serial", h.Serial, "hostname", h.Hostname)
+		}
 	}
 
 	subscription := ext.topic + "consumer-group-1"
@@ -177,6 +189,7 @@ type host struct {
 	NodeKey  string
 	Hostname string
 	config   string
+	Serial   string
 
 	serviceClient service.KolideService
 	actionc       chan func()
@@ -185,7 +198,7 @@ type host struct {
 
 func newHost(serverURL string, logger log.Logger) *host {
 	h := &host{
-		Hostname: "abcd",
+		Hostname: fmt.Sprintf("fake-launcher-%d%d", rand.Intn(9), rand.Intn(9)),
 		logger:   logger,
 		actionc:  make(chan func()),
 	}
@@ -202,6 +215,9 @@ func newHost(serverURL string, logger log.Logger) *host {
 func (h *host) setup(serverURL string, logger log.Logger) error {
 	errc := make(chan error, 1)
 	h.actionc <- func() {
+		h.Serial = randomMacSerial()
+		nodekey, _ := ioutil.ReadFile(filepath.Join("/tmp", fmt.Sprintf("%s_nodekey", h.Hostname)))
+		h.NodeKey = string(nodekey)
 		conn, err := dialGRPC(serverURL, false, false, logger)
 		if err != nil {
 			errc <- err
@@ -221,7 +237,7 @@ func (h *host) setup(serverURL string, logger log.Logger) error {
 }
 
 func generateOrLoadUUID(hostname string) (string, error) {
-	data, err := ioutil.ReadFile(filepath.Join("/tmp", "hostname"))
+	data, err := ioutil.ReadFile(filepath.Join("/tmp", hostname))
 	if err == nil {
 		return string(data), nil
 	}
@@ -245,6 +261,7 @@ func (h *host) RequestEnrollment(enrollSecret string) error {
 			goto authTag
 		}
 		h.NodeKey = nodekey
+		ioutil.WriteFile(filepath.Join("/tmp", fmt.Sprintf("%s_nodekey", h.Hostname)), []byte(nodekey), 0644)
 		errc <- nil
 	}
 	return <-errc
@@ -297,7 +314,11 @@ func (h *host) PublishLogs(logType logger.LogType, logs []string) error {
 	for _, l := range logs {
 		nl := strings.Replace(l, "FA01680E-98CA-5557-8F59-7716ECFEE964", h.UUID, -1)
 		nl = strings.Replace(nl, "kl.groob.io", h.Hostname, -1)
-		fmt.Println(nl)
+		nl = strings.Replace(nl, "C02RX6G8G8WP", h.Serial, -1)
+		nl = strings.Replace(nl, "amplify-launcher-identifier", h.UUID, -1)
+		if strings.Compare(l, nl) != 0 {
+			fmt.Println(nl)
+		}
 		modifiedLogs = append(modifiedLogs, nl)
 	}
 	errc := make(chan error, 1)
@@ -326,6 +347,24 @@ func (h *host) loop() {
 			f()
 		}
 	}
+}
+
+func randomMacSerial() string {
+	source := "C02RX6G%d%d%d%d%d"
+	newSerial := fmt.Sprintf(
+		source,
+		rand.Intn(9),
+		rand.Intn(9),
+		rand.Intn(9),
+		rand.Intn(9),
+		rand.Intn(9),
+	)
+	return newSerial
+
+}
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
 }
 
 func main() {
