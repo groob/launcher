@@ -39,6 +39,9 @@ endif
 
 build: launcher extension
 
+amplify:
+	go install ./cmd/amplify/
+
 .pre-build:
 	mkdir -p build/darwin
 	mkdir -p build/linux
