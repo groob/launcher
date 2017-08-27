@@ -99,45 +99,67 @@ func (h hosts) Enroll(logger log.Logger, enrollSecret string) {
 }
 
 func (h hosts) RequestConfig(logger log.Logger, enrollSecret string) {
+	var wg sync.WaitGroup
+	wg.Add(len(h))
 	for _, hs := range h {
-		if err := hs.RequestConfig(); err != nil {
-			level.Info(logger).Log("err", err, "host", hs.Hostname)
-		}
+		go func(hs *host) {
+			if err := hs.RequestConfig(); err != nil {
+				level.Info(logger).Log("err", err, "host", hs.Hostname)
+			}
+			wg.Done()
+		}(hs)
 	}
+	wg.Wait()
+	fmt.Println("done with RequestConfig")
 }
 
 func (h hosts) RequestQueries(logger log.Logger, enrollSecret string) {
+	var wg sync.WaitGroup
+	wg.Add(len(h))
 	for _, hs := range h {
-		if err := hs.RequestQueries(); err != nil {
-			level.Info(logger).Log("err", err, "host", hs.Hostname)
-		}
+		go func(hs *host) {
+			if err := hs.RequestQueries(); err != nil {
+				level.Info(logger).Log("err", err, "host", hs.Hostname)
+			}
+			wg.Done()
+		}(hs)
 	}
+	wg.Wait()
+	fmt.Println("done with request queries")
 }
 
 func (h hosts) PublishLogs(logger log.Logger, logType logger.LogType, logs []string) {
+	var wg sync.WaitGroup
+	wg.Add(len(h))
 	for _, hs := range h {
-		if err := hs.PublishLogs(logType, logs); err != nil {
-			level.Info(logger).Log("err", err, "host", hs.Hostname)
-		}
+		go func(hs *host) {
+			if err := hs.PublishLogs(logType, logs); err != nil {
+				level.Info(logger).Log("err", err, "host", hs.Hostname)
+			}
+			wg.Done()
+		}(hs)
 	}
+	wg.Wait()
+	fmt.Println("done with PublishLogs")
 }
 
 func (ext *extension) Run() error {
 	var hosts hosts
-	for i := 0; i <= 10; i++ {
+	for i := 0; i <= 100; i++ {
 		h := newHost(ext.serverURL, ext.logger)
 		if h != nil {
 			hosts = append(hosts, h)
 			level.Info(ext.logger).Log("msg", "configured host", "serial", h.Serial, "hostname", h.Hostname)
 		}
 	}
+	hosts.Enroll(ext.logger, ext.enrollSecret)
 
 	subscription := ext.topic + "consumer-group-1"
 	topic := ext.psClient.Topic(ext.topic)
 	ctx := context.Background()
 	ext.psClient.CreateSubscription(ctx, subscription, pubsub.SubscriptionConfig{
 		Topic:       topic,
-		AckDeadline: 20 * time.Second,
+		AckDeadline: 10 * time.Second,
 	})
 
 	s := ext.psClient.Subscription(subscription)
@@ -145,7 +167,7 @@ func (ext *extension) Run() error {
 		method := msg.Attributes["method"]
 		switch method {
 		case "RequestEnrollment":
-			hosts.Enroll(ext.logger, ext.enrollSecret)
+			// hosts.Enroll(ext.logger, ext.enrollSecret)
 		case "RequestConfig":
 			hosts.RequestConfig(ext.logger, ext.enrollSecret)
 		case "RequestQueries":
@@ -198,7 +220,7 @@ type host struct {
 
 func newHost(serverURL string, logger log.Logger) *host {
 	h := &host{
-		Hostname: fmt.Sprintf("fake-launcher-%d%d", rand.Intn(9), rand.Intn(9)),
+		Hostname: hostname(),
 		logger:   logger,
 		actionc:  make(chan func()),
 	}
@@ -210,6 +232,16 @@ func newHost(serverURL string, logger log.Logger) *host {
 	}
 
 	return h
+}
+
+func hostname() string {
+	return fmt.Sprintf("fake-launcher-%d%d%d%d%d",
+		rand.Intn(9),
+		rand.Intn(9),
+		rand.Intn(9),
+		rand.Intn(9),
+		rand.Intn(9),
+	)
 }
 
 func (h *host) setup(serverURL string, logger log.Logger) error {
@@ -316,9 +348,9 @@ func (h *host) PublishLogs(logType logger.LogType, logs []string) error {
 		nl = strings.Replace(nl, "kl.groob.io", h.Hostname, -1)
 		nl = strings.Replace(nl, "C02RX6G8G8WP", h.Serial, -1)
 		nl = strings.Replace(nl, "amplify-launcher-identifier", h.UUID, -1)
-		if strings.Compare(l, nl) != 0 {
-			fmt.Println(nl)
-		}
+		// if strings.Compare(l, nl) != 0 {
+		// 	fmt.Println(nl)
+		// }
 		modifiedLogs = append(modifiedLogs, nl)
 	}
 	errc := make(chan error, 1)
