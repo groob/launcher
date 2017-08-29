@@ -26,6 +26,7 @@ import (
 	goog_uuid "github.com/google/uuid"
 	"github.com/kolide/kit/env"
 	"github.com/kolide/launcher/service"
+	"github.com/kolide/osquery-go/plugin/distributed"
 	"github.com/kolide/osquery-go/plugin/logger"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -84,14 +85,17 @@ type extension struct {
 type hosts []*host
 
 func (h hosts) Enroll(logger log.Logger, enrollSecret string) {
+	sem := make(chan int, 100)
 	var wg sync.WaitGroup
 	wg.Add(len(h))
 	for _, hs := range h {
+		sem <- 1
 		go func(hs *host) {
 			if err := hs.RequestEnrollment(enrollSecret); err != nil {
 				level.Info(logger).Log("err", err, "host", hs.Hostname)
 			}
 			wg.Done()
+			<-sem
 		}(hs)
 	}
 	wg.Wait()
@@ -128,6 +132,30 @@ func (h hosts) RequestQueries(logger log.Logger, enrollSecret string) {
 	fmt.Println("done with request queries")
 }
 
+func (h hosts) PublishResults(logger log.Logger, resultsData []byte) {
+	var wg sync.WaitGroup
+	wg.Add(len(h))
+	for _, hs := range h {
+		go func(hs *host) {
+
+			var message = struct {
+				Method  string               `json:"method"`
+				Results []distributed.Result `json:"results"`
+			}{}
+			newData := hs.replace(string(resultsData))
+			if err := json.Unmarshal([]byte(newData), &message); err != nil {
+				level.Info(logger).Log("err", err, "msg", "unmarshal PublishResults msg")
+			}
+			if err := hs.PublishResults(message.Results); err != nil {
+				level.Info(logger).Log("err", err, "host", hs.Hostname, "msg", "publishing results")
+			}
+			wg.Done()
+		}(hs)
+	}
+	wg.Wait()
+	fmt.Println("done with PublishLogs")
+}
+
 func (h hosts) PublishLogs(logger log.Logger, logType logger.LogType, logs []string) {
 	var wg sync.WaitGroup
 	wg.Add(len(h))
@@ -145,7 +173,7 @@ func (h hosts) PublishLogs(logger log.Logger, logType logger.LogType, logs []str
 
 func (ext *extension) Run() error {
 	var hosts hosts
-	for i := 0; i <= 100; i++ {
+	for i := 0; i <= 500; i++ {
 		h := newHost(ext.serverURL, ext.logger)
 		if h != nil {
 			hosts = append(hosts, h)
@@ -172,6 +200,8 @@ func (ext *extension) Run() error {
 			hosts.RequestConfig(ext.logger, ext.enrollSecret)
 		case "RequestQueries":
 			hosts.RequestQueries(ext.logger, ext.enrollSecret)
+		case "PublishResults":
+			hosts.PublishResults(ext.logger, msg.Data)
 		case "PublishLogs":
 			var message = struct {
 				Method  string         `json:"method"`
@@ -278,6 +308,7 @@ func generateOrLoadUUID(hostname string) (string, error) {
 }
 
 func (h *host) RequestEnrollment(enrollSecret string) error {
+	time.Sleep(time.Duration(rand.Intn(3)) * time.Second)
 	errc := make(chan error, 1)
 	h.actionc <- func() {
 		var count int
@@ -300,12 +331,13 @@ func (h *host) RequestEnrollment(enrollSecret string) error {
 }
 
 func (h *host) RequestQueries() error {
+	time.Sleep(time.Duration(rand.Intn(3)) * time.Second)
 	errc := make(chan error, 1)
 	h.actionc <- func() {
 		var count int
 		ctx := context.Background()
 	authTag:
-		queries, reauth, err := h.serviceClient.RequestQueries(ctx, h.NodeKey)
+		_, reauth, err := h.serviceClient.RequestQueries(ctx, h.NodeKey)
 		if err != nil {
 			errc <- err
 			return
@@ -314,13 +346,13 @@ func (h *host) RequestQueries() error {
 			count++
 			goto authTag
 		}
-		_ = queries
 		errc <- nil
 	}
 	return <-errc
 }
 
 func (h *host) RequestConfig() error {
+	time.Sleep(time.Duration(rand.Intn(3)) * time.Second)
 	errc := make(chan error, 1)
 	h.actionc <- func() {
 		var count int
@@ -341,13 +373,43 @@ func (h *host) RequestConfig() error {
 	return <-errc
 }
 
+var launcherId = env.String("LAUNCHER_IDENTIFIER", "amplify-launcher-identifier")
+
+func (h *host) replace(s string) string {
+	nl := strings.Replace(s, "FA01680E-98CA-5557-8F59-7716ECFEE964", h.UUID, -1)
+	nl = strings.Replace(nl, "kl.groob.io", h.Hostname, -1)
+	nl = strings.Replace(nl, "C02RX6G8G8WP", h.Serial, -1)
+	nl = strings.Replace(nl, launcherId, h.UUID, -1)
+	return nl
+}
+
+func (h *host) PublishResults(results []distributed.Result) error {
+	time.Sleep(time.Duration(rand.Intn(3)) * time.Second)
+	// var newResults []distributed.Result
+	errc := make(chan error, 1)
+	h.actionc <- func() {
+		var count int
+		ctx := context.Background()
+	authTag:
+		_, _, reauth, err := h.serviceClient.PublishResults(ctx, h.NodeKey, results)
+		if err != nil {
+			errc <- err
+			return
+		}
+		if reauth && count < 1 {
+			count++
+			goto authTag
+		}
+		errc <- nil
+	}
+	return <-errc
+}
+
 func (h *host) PublishLogs(logType logger.LogType, logs []string) error {
+	time.Sleep(time.Duration(rand.Intn(3)) * time.Second)
 	var modifiedLogs []string
 	for _, l := range logs {
-		nl := strings.Replace(l, "FA01680E-98CA-5557-8F59-7716ECFEE964", h.UUID, -1)
-		nl = strings.Replace(nl, "kl.groob.io", h.Hostname, -1)
-		nl = strings.Replace(nl, "C02RX6G8G8WP", h.Serial, -1)
-		nl = strings.Replace(nl, "amplify-launcher-identifier", h.UUID, -1)
+		nl := h.replace(l)
 		// if strings.Compare(l, nl) != 0 {
 		// 	fmt.Println(nl)
 		// }

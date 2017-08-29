@@ -10,6 +10,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/google/uuid"
+	"github.com/kolide/kit/env"
 	"github.com/kolide/launcher/service"
 	"github.com/kolide/osquery-go/plugin/distributed"
 	"github.com/kolide/osquery-go/plugin/logger"
@@ -154,7 +155,8 @@ func (e *Extension) Shutdown() {
 // there is an existing identifier, that should be returned. If not, the
 // identifier should be randomly generated and persisted.
 func (e *Extension) getHostIdentifier() (string, error) {
-	return "amplify-launcher-identifier", nil
+	id := env.String("LAUNCHER_IDENTIFIER", "amplify-launcher-identifier")
+	return id, nil
 	var identifier string
 	err := e.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(configBucket))
