@@ -74,14 +74,14 @@
 [[projects]]
   name = "github.com/go-stack/stack"
   packages = ["."]
-  revision = "817915b46b97fd7bb80e8ab6b69f01a53ac3eebf"
-  version = "v1.6.0"
+  revision = "259ab82a6cad3992b4e21ff5cac294ccb06474bc"
+  version = "v1.7.0"
 
 [[projects]]
   branch = "master"
   name = "github.com/golang/protobuf"
   packages = ["proto","ptypes","ptypes/any","ptypes/duration","ptypes/timestamp"]
-  revision = "130e6b02ab059e7b717a096f397c5b60111cae74"
+  revision = "1e59b77b52bf8e4b449a57e6f79f21226d571845"
 
 [[projects]]
   name = "github.com/google/uuid"
@@ -105,13 +105,14 @@
   branch = "master"
   name = "github.com/kolide/osquery-go"
   packages = [".","gen/osquery","gen/osquery/mock","plugin/config","plugin/distributed","plugin/logger","plugin/table","transport"]
-  revision = "03a792fcca9a86c9a717109c2ad8763d0759105b"
+  revision = "77394894ef63b4ea25e1c0c4f8a8b3d1919e1aa6"
 
 [[projects]]
-  branch = "master"
+  branch = "targets_signed"
   name = "github.com/kolide/updater"
   packages = ["tuf"]
-  revision = "ec5168a7b81bf57730f1a16fb6c36f9374f0874a"
+  revision = "df5b643aca5bffd9afefec7864a7e77b70643506"
+  source = "github.com/groob/updater"
 
 [[projects]]
   branch = "master"
@@ -123,7 +124,7 @@
   branch = "master"
   name = "github.com/miekg/pkcs11"
   packages = ["."]
-  revision = "eda1d775a087f2a96fec7c7876ea94dea43e6027"
+  revision = "694c80ab67e3b197690c5ba8a11f0ecdf7a90c93"
 
 [[projects]]
   branch = "master"
@@ -159,31 +160,31 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["pbkdf2","ssh/terminal"]
-  revision = "541b9d50ad47e36efd8fb423e938e59ff1691f68"
+  revision = "94eea52f7b742c7cbe0b03b22f0c4c8631ece122"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context","http2","http2/hpack","idna","internal/timeseries","lex/httplex","trace"]
-  revision = "aabf50738bcdd9b207582cbe796b59ed65d56680"
+  revision = "a8b9294777976932365dabb6640cf1468d95c70f"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sync"
   packages = ["errgroup"]
-  revision = "8e0aa688b654ef28caa72506fa5ec8dba9fc7690"
+  revision = "fd80eb99c8f653c847d294a001bdf2a3a6f768f5"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
-  revision = "8dbc5d05d6edcc104950cc299a1ce6641235bc86"
+  revision = "8b4580aae2a0dd0c231a45d3ccb8434ff533b840"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/text"
   packages = ["collate","collate/build","internal/colltab","internal/gen","internal/tag","internal/triegen","internal/ucd","language","secure/bidirule","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable"]
-  revision = "c01e4764d870b77f8abe5096ee19ad20d80e8075"
+  revision = "57961680700a5336d15015c8c50686ca5ba362a4"
 
 [[projects]]
   branch = "master"
@@ -195,13 +196,13 @@
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "f676e0f3ac6395ff1a529ae59a6670878a8371a6"
+  revision = "7f0da29060c682909f650ad8ed4e515bd74fa12a"
 
 [[projects]]
   name = "google.golang.org/grpc"
-  packages = [".","balancer","codes","connectivity","credentials","grpclb/grpc_lb_v1/messages","grpclog","internal","keepalive","metadata","naming","peer","resolver","stats","status","tap","transport"]
-  revision = "f7bf885db0b7479a537ec317c6e48ce53145f3db"
-  version = "v1.7.0"
+  packages = [".","balancer","balancer/roundrobin","codes","connectivity","credentials","encoding","grpclb/grpc_lb_v1/messages","grpclog","internal","keepalive","metadata","naming","peer","resolver","resolver/dns","resolver/passthrough","stats","status","tap","transport"]
+  revision = "5a9f7b402fe85096d2e1d0383435ee1876e863d0"
+  version = "v1.8.0"
 
 [[projects]]
   branch = "v2"
@@ -212,6 +213,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c0db9c24953f899c2d13f2557389a680202dfccf193b4dfa736efdb641b33b8b"
+  inputs-digest = "cdb13d01fab37f2fd30f806e89882d171c33d94fd3d0c04933080d30a01fbd95"
   solver-name = "gps-cdcl"
   solver-version = 1

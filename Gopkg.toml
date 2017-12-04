@@ -27,6 +27,8 @@
 
 [[constraint]]
   name = "github.com/kolide/updater"
+  source = "github.com/groob/updater"
+  branch = "targets_signed"
 
 [[constraint]]
   name = "github.com/mixer/clock"
