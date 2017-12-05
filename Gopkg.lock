@@ -93,7 +93,7 @@
   branch = "master"
   name = "github.com/groob/plist"
   packages = ["."]
-  revision = "63337f8a3d790883921bfaa0d54fd16d0baba0e0"
+  revision = "2805b357fb2349d3a53ad2d5a5d00d191d9a37c9"
 
 [[projects]]
   branch = "master"
@@ -111,7 +111,7 @@
   branch = "targets_signed"
   name = "github.com/kolide/updater"
   packages = ["tuf"]
-  revision = "df5b643aca5bffd9afefec7864a7e77b70643506"
+  revision = "19da399383fd4eb1e83fe54a02d7e0d21f8e5b78"
   source = "github.com/groob/updater"
 
 [[projects]]
@@ -200,9 +200,9 @@
 
 [[projects]]
   name = "google.golang.org/grpc"
-  packages = [".","balancer","balancer/roundrobin","codes","connectivity","credentials","encoding","grpclb/grpc_lb_v1/messages","grpclog","internal","keepalive","metadata","naming","peer","resolver","resolver/dns","resolver/passthrough","stats","status","tap","transport"]
-  revision = "5a9f7b402fe85096d2e1d0383435ee1876e863d0"
-  version = "v1.8.0"
+  packages = [".","balancer","balancer/roundrobin","codes","connectivity","credentials","encoding","grpclb/grpc_lb_v1/messages","grpclog","internal","keepalive","metadata","naming","peer","resolver","resolver/dns","resolver/manual","resolver/passthrough","stats","status","tap","transport"]
+  revision = "be077907e29fdb945d351e4284eb5361e7f8924e"
+  version = "v1.8.1"
 
 [[projects]]
   branch = "v2"
